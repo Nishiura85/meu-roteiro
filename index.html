@@ -1587,12 +1587,16 @@ Responda EXCLUSIVAMENTE em JSON válido (sem markdown, sem backticks, sem explic
       setLoading(false);
       try{
         var d=JSON.parse(xhr.responseText);
+        if(d.error){setError('API: '+(d.error.message||d.error));return}
+        if(d.type==='error'){setError('API: '+(d.error&&d.error.message||xhr.responseText.substring(0,150)));return}
         var txt=d.content?d.content.map(function(b){return b.text||''}).join(''):'';
-        var parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
+        if(!txt){setError('Resposta vazia da API. Status: '+xhr.status);return}
+        var clean=txt.replace(/```json|```/g,'').trim();
+        var parsed=JSON.parse(clean);
         parsed.dest=dest;
         setInfo(parsed);
         try{localStorage.setItem(cacheKey,JSON.stringify(parsed))}catch(e){}
-      }catch(e){setError('Erro ao interpretar resposta. Tente novamente.');console.error('[DestInfo]',e,xhr.responseText&&xhr.responseText.substring(0,300))}
+      }catch(e){setError('Erro parse: '+e.message+' | Resposta: '+(xhr.responseText||'').substring(0,120));console.error('[DestInfo]',e,xhr.responseText)}
     };
     xhr.onerror=function(){setLoading(false);setError('Erro de conexão. Verifique sua internet.')};
     xhr.send(JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]}));
@@ -1746,11 +1750,14 @@ IMPORTANTE: "restaurantes"=5 itens famosos. "passeios"=7 imperdíveis. "curiosid
       setLoading(false);
       try{
         var d=JSON.parse(xhr.responseText);
+        if(d.error){setError('API: '+(d.error.message||d.error));return}
+        if(d.type==='error'){setError('API: '+(d.error&&d.error.message||xhr.responseText.substring(0,150)));return}
         var txt=d.content?d.content.map(function(b){return b.text||''}).join(''):'';
+        if(!txt){setError('Resposta vazia. Status: '+xhr.status);return}
         var p=JSON.parse(txt.replace(/```json|```/g,'').trim());
         p.dest=dest;setInfo(p);
         try{localStorage.setItem(cacheKey,JSON.stringify(p))}catch(e){}
-      }catch(e){setError('Erro ao interpretar. Tente novamente.');console.error('[AiTips]',e,xhr.responseText&&xhr.responseText.substring(0,300))}
+      }catch(e){setError('Erro parse: '+e.message+' | Resposta: '+(xhr.responseText||'').substring(0,120));console.error('[AiTips]',e,xhr.responseText)}
     };
     xhr.onerror=function(){setLoading(false);setError('Erro de conexão. Verifique sua internet.')};
     xhr.send(JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:prompt}]}));
